@@ -1,17 +1,19 @@
 package com.example.aleksei.locationtracker
 
 import android.Manifest
+import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import com.google.android.gms.common.api.GoogleApiClient
-import com.google.android.gms.location.LocationListener
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.tbruyelle.rxpermissions2.RxPermissions
 import io.reactivex.Completable
-import android.location.Geocoder
+import io.reactivex.Observable
+import io.reactivex.ObservableSource
+import io.reactivex.functions.Function
 import java.util.*
 
 
@@ -26,11 +28,6 @@ class MainActivity : AppCompatActivity() {
     lateinit var googleConnectionCompletable: Completable
 
     lateinit var geocoder: Geocoder
-
-    val locationListener = LocationListener { loc ->
-        loc?.print()
-        Log.d(TAG, "Address: " + geocoder.getFromLocation(loc.latitude, loc.longitude, 1))
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,9 +55,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         googleConnectionCompletable.andThen(rxPermissions.request(Manifest.permission.ACCESS_FINE_LOCATION))
-                .subscribe({ t ->
-                    Log.d(TAG, "Google API and Permissions were received: " + t)
-                    if (t!!) {
+                .flatMap<Location?>(Function<Boolean, ObservableSource<Location>> {
+                    Observable.create<Location> { source ->
                         val location = LocationServices.FusedLocationApi.getLastLocation(googleApiClient)
                         location.print()
 
@@ -68,13 +64,19 @@ class MainActivity : AppCompatActivity() {
                         locationRequest.interval = 10000
                         locationRequest.fastestInterval = 5000
                         locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-                        Log.d("", "")
                         LocationServices.FusedLocationApi.requestLocationUpdates(
-                                googleApiClient, locationRequest, locationListener)
+                                googleApiClient,
+                                locationRequest) {
+                            source.onNext(it)
+                        }
                     }
-                },
-                        { t -> Log.e(TAG, "Failed to connect Google API and get Permissions, thr:", t) }
-                )
+                }).map {
+            var addres = geocoder.getFromLocation(it!!.latitude, it.longitude, 1)[0]
+            Pair(it, addres)
+        }.subscribe {
+            it.first.print()
+            Log.d(TAG, "Address: " + it.second)
+        }
     }
 
     override fun onStart() {
@@ -84,7 +86,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, locationListener)
+        //todo remove location listener
     }
 
     override fun onStop() {
