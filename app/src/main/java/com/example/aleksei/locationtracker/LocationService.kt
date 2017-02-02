@@ -55,10 +55,12 @@ class LocationService : Service() {
                     .addApi(LocationServices.API)
                     .build()
         }.andThen(Observable.create<Location> { source ->
-            val location = LocationServices.FusedLocationApi.getLastLocation(googleApiClient)
+            val locationApi = LocationServices.FusedLocationApi
+            val location = locationApi.getLastLocation(googleApiClient)
             location.print()
 
             val locationRequest: LocationRequest = LocationRequest()
+            locationRequest.smallestDisplacement = 1.0f
             locationRequest.interval = 10000
             locationRequest.fastestInterval = 5000
             locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
