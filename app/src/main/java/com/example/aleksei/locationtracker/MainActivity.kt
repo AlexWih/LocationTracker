@@ -1,101 +1,30 @@
 package com.example.aleksei.locationtracker
 
 import android.Manifest
-import android.location.Geocoder
-import android.location.Location
+import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import com.google.android.gms.common.api.GoogleApiClient
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationServices
 import com.tbruyelle.rxpermissions2.RxPermissions
-import io.reactivex.Completable
-import io.reactivex.Observable
-import io.reactivex.ObservableSource
-import io.reactivex.functions.Function
-import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
 
     val TAG = "DTM463"
 
-    lateinit var googleApiClient: GoogleApiClient
-
-    lateinit var rxPermissions: RxPermissions
-
-    lateinit var googleConnectionCompletable: Completable
-
-    lateinit var geocoder: Geocoder
+    private lateinit var rxPermissions: RxPermissions
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         rxPermissions = RxPermissions(this)
-        geocoder = Geocoder(this, Locale.getDefault())
-
-        googleConnectionCompletable = Completable.create { e ->
-            googleApiClient = GoogleApiClient.Builder(this@MainActivity)
-                    .addConnectionCallbacks(object : GoogleApiClient.ConnectionCallbacks {
-                        override fun onConnected(bundle: Bundle?) {
-                            Log.d(TAG, "Google API connected")
-                            e.onComplete()
-                        }
-
-                        override fun onConnectionSuspended(var1: Int) {
-                            Log.d(TAG, "Google API connection suspended")
-                        }
-
-                    })
-                    .addOnConnectionFailedListener { Log.d(TAG, "Google API Connection Failed") }
-                    .addApi(LocationServices.API)
-                    .build()
-        }
-
-        googleConnectionCompletable.andThen(rxPermissions.request(Manifest.permission.ACCESS_FINE_LOCATION))
-                .flatMap<Location?>(Function<Boolean, ObservableSource<Location>> {
-                    Observable.create<Location> { source ->
-                        val location = LocationServices.FusedLocationApi.getLastLocation(googleApiClient)
-                        location.print()
-
-                        var locationRequest: LocationRequest = LocationRequest()
-                        locationRequest.interval = 10000
-                        locationRequest.fastestInterval = 5000
-                        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-                        LocationServices.FusedLocationApi.requestLocationUpdates(
-                                googleApiClient,
-                                locationRequest) {
-                            source.onNext(it)
-                        }
-                    }
-                }).map {
-            var addres = geocoder.getFromLocation(it!!.latitude, it.longitude, 1)[0]
-            Pair(it, addres)
-        }.subscribe {
-            it.first.print()
-            Log.d(TAG, "Address: " + it.second)
-        }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        googleApiClient.connect()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        //todo remove location listener
-    }
-
-    override fun onStop() {
-        super.onStop()
-        googleApiClient.disconnect()
-    }
-
-    fun Location.print() {
-        Log.d(TAG, "New location(" + this.longitude + "/" + this.latitude + "), accuracy: " + this.accuracy)
+        rxPermissions.request(Manifest.permission.ACCESS_FINE_LOCATION)
+                .subscribe {
+                    Log.d(TAG, "Starting service...")
+                    val intent = Intent(this, LocationService::class.java)
+                    startService(intent)
+                }
     }
 
 }

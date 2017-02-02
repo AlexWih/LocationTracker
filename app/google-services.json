@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "41871687005",
+    "firebase_url": "https://locationtracker-4029f.firebaseio.com",
+    "project_id": "locationtracker-4029f",
+    "storage_bucket": "locationtracker-4029f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:41871687005:android:7da259e318c025d6",
+        "android_client_info": {
+          "package_name": "com.example.aleksei.locationtracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "41871687005-ir3f9t7hsds5cg9st6eo2s0l05iir4pn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAiPSDIkx1umKzCSVJ5KN_gICbUmfqpi6o"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "41871687005-ir3f9t7hsds5cg9st6eo2s0l05iir4pn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
